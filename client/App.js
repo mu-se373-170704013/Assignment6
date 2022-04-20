@@ -3,7 +3,6 @@ import {
   Text,
   View,
   SafeAreaView,
-  Button,
   Pressable,
   TextInput,
 } from 'react-native';
@@ -13,11 +12,126 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import axios from 'axios';
 
 const Stack = createNativeStackNavigator();
+
+const Edit = ({navigation, route}) => {
+  const [username, setUsername] = useState(route?.params?.data?.username);
+  const [email, setEmail] = useState(route?.params?.data?.email);
+  const [password, setPassword] = useState(route?.params?.data?.password);
+  const [gender, setGender] = useState(route?.params?.data?.gender);
+
+  return (
+    <SafeAreaView>
+      <Text style={styles.editTitle}> USERNAME </Text>
+      <TextInput
+        style={styles.textInput}
+        value={username}
+        onChangeText={value => setUsername(value)}
+        placeholder="Username"
+        autoCapitalize="none"
+      />
+      <Text style={styles.editTitle}> EMAIL </Text>
+      <TextInput
+        style={styles.textInput}
+        value={email}
+        onChangeText={value => setEmail(value)}
+        placeholder="Email"
+        autoCapitalize="none"
+      />
+      <Text style={styles.editTitle}> PASSWORD </Text>
+      <TextInput
+        style={styles.textInput}
+        value={password}
+        onChangeText={value => setPassword(value)}
+        placeholder="Password"
+        autoCapitalize="none"
+        secureTextEntry
+      />
+      <Text style={styles.editTitle}> GENDER </Text>
+      <View style={styles.genderContainer}>
+        <Pressable style={styles.radioButton} onPress={() => setGender('male')}>
+          <View
+            style={[
+              styles.radio,
+              {
+                borderColor:
+                  gender === 'male' ? 'rgb(30,220,180)' : 'rgb(30,30,30)',
+              },
+            ]}>
+            {gender === 'male' && <View style={styles.selected} />}
+          </View>
+          <Text>Male</Text>
+        </Pressable>
+        <Pressable
+          style={styles.radioButton}
+          onPress={() => setGender('female')}>
+          <View
+            style={[
+              styles.radio,
+              {
+                borderColor:
+                  gender === 'female' ? 'rgb(30,220,180)' : 'rgb(30,30,30)',
+              },
+            ]}>
+            {gender === 'female' && <View style={styles.selected} />}
+          </View>
+          <Text>Female</Text>
+        </Pressable>
+      </View>
+      <Pressable
+        style={styles.mainButton}
+        onPress={() =>
+          axios
+            .put('http://localhost:3000/update', {
+              id: route?.params?.data?._id,
+              username: username,
+              email: email,
+              password: password,
+              gender: gender,
+            })
+            .then(res => navigation.navigate('Home', {data: res.data}))
+            .catch(err => console.log('err', err.response))
+        }>
+        <Text style={styles.mainButtonText}>UPDATE</Text>
+      </Pressable>
+    </SafeAreaView>
+  );
+};
+
 const Home = ({navigation, route}) => {
   console.log('route', route);
   return (
     <SafeAreaView>
       <Text style={styles.title}>Welcome to Profile</Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <Pressable
+          style={[styles.mainButton, {backgroundColor: 'red'}]}
+          onPress={() => {
+            console.log('iddddd', route?.params?.data?._id);
+            axios
+              .delete('http://localhost:3000/delete', {
+                data: {id: route?.params?.data?._id},
+              })
+              .then(res => {
+                console.log(res);
+                navigation.navigate('Login');
+              })
+              .catch(err => console.log('err', err.response));
+          }}>
+          <Text style={styles.mainButtonText}>DELETE</Text>
+        </Pressable>
+        <Pressable
+          style={styles.mainButton}
+          onPress={() =>
+            navigation.navigate('Edit', {data: route?.params?.data})
+          }>
+          <Text style={styles.mainButtonText}>EDIT</Text>
+        </Pressable>
+      </View>
       <View style={styles.row}>
         <Text style={{fontSize: 19, fontWeight: 'bold'}}>Id: </Text>
         <Text style={{fontSize: 16, color: 'rgb(100,100,100)'}}>
@@ -95,6 +209,7 @@ const Login = ({navigation}) => {
     </SafeAreaView>
   );
 };
+
 const Register = ({navigation}) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -200,6 +315,11 @@ const App = () => {
           component={Home}
           options={{headerShown: false}}
         />
+        <Stack.Screen
+          name="Edit"
+          component={Edit}
+          options={{headerShown: false}}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -264,5 +384,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginBottom: 30,
     marginHorizontal: 30,
+  },
+  editTitle: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 5,
+    color: 'purple',
+    marginTop: 15,
   },
 });
